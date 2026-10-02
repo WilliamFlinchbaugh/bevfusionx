@@ -199,7 +199,10 @@ def _fill_trainval_infos(nusc,
         location = nusc.get("log", nusc.get("scene", sample["scene_token"])["log_token"])["location"]
         lidar_path, boxes, _ = nusc.get_sample_data(lidar_token)
 
-        mmcv.check_file_exist(lidar_path)
+        try:
+            mmcv.check_file_exist(lidar_path)
+        except FileNotFoundError:
+            continue
 
         info = {
             'lidar_path': lidar_path,

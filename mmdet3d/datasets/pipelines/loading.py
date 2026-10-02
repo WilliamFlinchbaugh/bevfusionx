@@ -668,6 +668,10 @@ class LoadRadarPointsMultiSweeps(object):
             'none': (range(18), range(8), range(5)), 
         }[self.filtering]
 
+        # TODO: Quick and dirty way to avoid loading the radar data if it's missing
+        if not os.path.exists(pts_filename):
+            return np.zeros((1, 18))
+        
         radar_obj = RadarPointCloud.from_file(
             pts_filename, 
             invalid_states, dynprop_states, ambig_states
