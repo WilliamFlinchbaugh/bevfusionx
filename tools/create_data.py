@@ -107,16 +107,16 @@ if __name__ == "__main__":
             max_sweeps=args.max_sweeps,
             load_augmented=load_augmented,
         )
-        test_version = f"{args.version}-test"
-        nuscenes_data_prep(
-            root_path=args.root_path,
-            info_prefix=args.extra_tag,
-            version=test_version,
-            dataset_name="NuScenesDataset",
-            out_dir=args.out_dir,
-            max_sweeps=args.max_sweeps,
-            load_augmented=load_augmented,
-        )
+        # test_version = f"{args.version}-test"
+        # nuscenes_data_prep(
+        #     root_path=args.root_path,
+        #     info_prefix=args.extra_tag,
+        #     version=test_version,
+        #     dataset_name="NuScenesDataset",
+        #     out_dir=args.out_dir,
+        #     max_sweeps=args.max_sweeps,
+        #     load_augmented=load_augmented,
+        # )
     elif args.dataset == "nuscenes" and args.version == "v1.0-mini":
         train_version = f"{args.version}"
         nuscenes_data_prep(
