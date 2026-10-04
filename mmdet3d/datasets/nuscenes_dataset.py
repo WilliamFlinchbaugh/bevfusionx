@@ -438,15 +438,34 @@ class NuScenesDataset(Custom3DDataset):
             "v1.0-mini": "mini_val",
             "v1.0-trainval": "val",
         }
-        nusc_eval = DetectionEval(
-            nusc,
-            config=self.eval_detection_configs,
-            result_path=result_path,
-            eval_set=eval_set_map[self.version],
-            output_dir=output_dir,
-            verbose=False,
-        )
-        nusc_eval.main(render_curves=False)
+
+        # Provide support for only having a subset of the blobs
+        import nuscenes.eval.detection.evaluate as _nusc_det_eval
+
+        _pred_tokens = set(mmcv.load(result_path)["results"].keys())
+        _valid_tokens = _pred_tokens & {info["token"] for info in self.data_infos}
+        assert _valid_tokens, "no samples overlap between predictions and infos pkl"
+
+        _orig_load_gt = _nusc_det_eval.load_gt
+
+        def _load_gt_restricted(nusc_, eval_split_, box_cls_, verbose=False):
+            gt = _orig_load_gt(nusc_, eval_split_, box_cls_, verbose)
+            gt.boxes = {t: gt.boxes[t] for t in gt.sample_tokens if t in _valid_tokens}
+            return gt
+
+        _nusc_det_eval.load_gt = _load_gt_restricted
+        try:
+            nusc_eval = DetectionEval(
+                nusc,
+                config=self.eval_detection_configs,
+                result_path=result_path,
+                eval_set=eval_set_map[self.version],
+                output_dir=output_dir,
+                verbose=False,
+            )
+            nusc_eval.main(render_curves=False)
+        finally:
+            _nusc_det_eval.load_gt = _orig_load_gt
 
         # record metrics
         metrics = mmcv.load(osp.join(output_dir, "metrics_summary.json"))
