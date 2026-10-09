@@ -98,6 +98,7 @@ class BEVFusion(Base3DFusionModel):
         # If the camera's vtransform is a BEVDepth version, then we're using depth loss. 
         self.use_depth_loss = ((encoders.get('camera', {}) or {}).get('vtransform', {}) or {}).get('type', '') in ['BEVDepth', 'AwareBEVDepth', 'DBEVDepth', 'AwareDBEVDepth']
 
+        self.pretrain_aux = kwargs.get("pretrain_aux", False)
 
         self.init_weights()
 
@@ -332,7 +333,15 @@ class BEVFusion(Base3DFusionModel):
             features = features[::-1]
 
         if self.fuser is not None:
-            x = self.fuser(features)
+            if self.pretrain_aux and self.training:
+                # Get the fused tensor and the dictionary of scalar losses
+                x, aux_losses = self.fuser(features, return_aux_losses=True)
+                
+                # Prepend 'loss/' so the MMCV runner knows these are tracked loss values
+                outputs = {f"loss/{k}": v for k, v in aux_losses.items()}
+                return outputs
+            else:
+                x = self.fuser(features)
         else:
             assert len(features) == 1, features
             x = features[0]
